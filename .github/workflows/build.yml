@@ -19,22 +19,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: windows-latest
+            artifact_name: VoidBreaker-Windows
+          - os: macos-latest
+            artifact_name: VoidBreaker-macOS
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Install Linux Dependencies
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libgl1-mesa-dev libxkbcommon-dev libegl1-mesa-dev libxcb-cursor0 libxcb-xinerama0
-
     - name: Install Qt 6
-      uses: jurplel/install-qt@v4
+      uses: jurplel/install-qt@v3
       with:
-        version: '6.5.3'
+        version: '6.6.2'
+        dir: '${{ github.workspace }}/Qt'
 
     - name: Configure CMake
       run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
@@ -43,40 +42,32 @@ jobs:
       run: cmake --build build --config Release
 
     - name: Package (Windows)
-      if: matrix.os == 'windows-latest'
+      if: runner.os == 'Windows'
       shell: pwsh
       run: |
-        mkdir package
+        New-Item -ItemType Directory -Force -Path package
         if (Test-Path build/Release/VoidBreaker.exe) {
           Copy-Item build/Release/VoidBreaker.exe package/
-        } else {
+        } else if (Test-Path build/VoidBreaker.exe) {
           Copy-Item build/VoidBreaker.exe package/
         }
         windeployqt package/VoidBreaker.exe
         Compress-Archive -Path package/* -DestinationPath VoidBreaker-Windows.zip
 
     - name: Package (macOS)
-      if: matrix.os == 'macos-latest'
+      if: runner.os == 'macOS'
       run: |
-        mkdir package
+        mkdir -p package
         cp -r build/VoidBreaker.app package/
         macdeployqt package/VoidBreaker.app -dmg
         zip -r VoidBreaker-macOS.zip package/
 
-    - name: Package (Linux)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        mkdir package
-        cp build/VoidBreaker package/
-        tar -czvf VoidBreaker-Linux.tar.gz -C package .
-
-    - name: Upload Artifacts to Release
+    - name: Upload Binaries to GitHub Release
       if: github.event_name == 'release' && github.event.action == 'published'
       uses: softprops/action-gh-release@v2
       with:
         files: |
           *.zip
-          *.tar.gz
           *.dmg
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
