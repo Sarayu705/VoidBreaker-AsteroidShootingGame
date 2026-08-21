@@ -21,8 +21,10 @@ jobs:
       matrix:
         include:
           - os: windows-latest
+            arch: win64_msvc2019_64
             artifact_name: VoidBreaker-Windows
           - os: macos-latest
+            arch: clang_64
             artifact_name: VoidBreaker-macOS
 
     steps:
@@ -33,7 +35,7 @@ jobs:
       uses: jurplel/install-qt@v3
       with:
         version: '6.6.2'
-        dir: '${{ github.workspace }}/Qt'
+        arch: ${{ matrix.arch }}
 
     - name: Configure CMake
       run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
