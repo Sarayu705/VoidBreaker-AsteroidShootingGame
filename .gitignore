@@ -1,0 +1,27 @@
+# Build directories
+build/
+build-*/
+CMakeLists.txt.user
+*.user
+
+# Qt generated files
+.qt/
+*.moc
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.swp
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
