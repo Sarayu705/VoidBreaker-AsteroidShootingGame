@@ -13,37 +13,70 @@ permissions:
 
 jobs:
   build-macos:
-    name: Build macOS Release
-    runs-on: macos-latest
+    name: Build on macOS
+    runs-on: macos-13
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Install Qt 6 via Homebrew
-      run: |
-        brew install qt@6
-        echo "$(brew --prefix qt@6)/bin" >> $GITHUB_PATH
+    - name: Install Qt 6
+      uses: jurplel/install-qt@v3
+      with:
+        version: '6.5.3'
 
     - name: Configure CMake
-      run: cmake -B build -S . -DCMAKE_PREFIX_PATH=$(brew --prefix qt@6) -DCMAKE_BUILD_TYPE=Release
+      run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
 
     - name: Build C++ Project
       run: cmake --build build --config Release
 
     - name: Package macOS App
       run: |
-        mkdir -p package
+        mkdir package
         cp -r build/VoidBreaker.app package/
-        $(brew --prefix qt@6)/bin/macdeployqt package/VoidBreaker.app -dmg
+        macdeployqt package/VoidBreaker.app -dmg
         zip -r VoidBreaker-macOS.zip package/
 
-    - name: Upload macOS Release Binaries
+    - name: Upload Binaries to Release
       if: github.event_name == 'release' && github.event.action == 'published'
       uses: softprops/action-gh-release@v2
       with:
         files: |
           VoidBreaker-macOS.zip
           package/VoidBreaker.dmg
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-linux:
+    name: Build on Linux
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Qt6 & Tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y qt6-base-dev qt6-tools-dev libgl1-mesa-dev libxkbcommon-dev cmake
+
+    - name: Configure CMake
+      run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build C++ Project
+      run: cmake --build build --config Release
+
+    - name: Package Linux
+      run: |
+        mkdir package
+        cp build/VoidBreaker package/
+        tar -czvf VoidBreaker-Linux.tar.gz -C package .
+
+    - name: Upload Binaries to Release
+      if: github.event_name == 'release' && github.event.action == 'published'
+      uses: softprops/action-gh-release@v2
+      with:
+        files: VoidBreaker-Linux.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
