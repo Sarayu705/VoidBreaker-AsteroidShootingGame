@@ -1,11 +1,5 @@
 # Void Breaker
 
-![C++17](https://img.shields.io/badge/C%2B%2B-17-blue.svg)
-![Qt 6](https://img.shields.io/badge/Qt-6.x-green.svg)
-![CMake](https://img.shields.io/badge/CMake-3.16+-orange.svg)
-![License](https://img.shields.io/badge/License-MIT-purple.svg)
-![Build Status](https://github.com/Sarayu705/VoidBreaker-AsteroidShootingGame/actions/workflows/build.yml/badge.svg)
-
 A high-performance **2D Arcade Space Shooter & PvP Battle Game** written in **C++17** and **Qt 6**. Built with custom pixel-art raster rendering, 2-player modes, item drop systems, procedural background generation, dynamic difficulty scaling, and 8-bit aesthetic particle physics.
 
 ---
