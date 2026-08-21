@@ -8,6 +8,9 @@ on:
   release:
     types: [ published ]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build on ${{ matrix.os }}
@@ -19,27 +22,21 @@ jobs:
         include:
           - os: ubuntu-latest
             artifact_name: VoidBreaker-Linux
-            asset_name: VoidBreaker-Linux.tar.gz
           - os: windows-latest
             artifact_name: VoidBreaker-Windows
-            asset_name: VoidBreaker-Windows.zip
           - os: macos-latest
             artifact_name: VoidBreaker-macOS
-            asset_name: VoidBreaker-macOS.zip
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
     - name: Install Qt 6
-      uses: jurplel/install-qt@v3
+      uses: jurplel/install-qt@v4
       with:
-        version: '6.5.3'
+        version: '6.6.2'
         host: ${{ runner.os == 'Windows' && 'windows' || (runner.os == 'macOS' && 'mac' || 'linux') }}
         target: 'desktop'
-
-    - name: Setup Ninja (Ubuntu & Windows)
-      uses: llvm/actions/install-ninja@v1
 
     - name: Configure CMake
       run: |
@@ -49,16 +46,20 @@ jobs:
       run: |
         cmake --build build --config Release
 
-    - name: Package Windows Release (Deploy Qt DLLs)
+    - name: Package Windows Release
       if: runner.os == 'Windows'
       shell: pwsh
       run: |
         mkdir package
-        Copy-Item build/Release/VoidBreaker.exe package/
-        windeployqt --no-compiler-runtime package/VoidBreaker.exe
+        if (Test-Path build/Release/VoidBreaker.exe) {
+          Copy-Item build/Release/VoidBreaker.exe package/
+        } else {
+          Copy-Item build/VoidBreaker.exe package/
+        }
+        windeployqt package/VoidBreaker.exe
         Compress-Archive -Path package/* -DestinationPath VoidBreaker-Windows.zip
 
-    - name: Package macOS Release (Deploy Qt Frameworks)
+    - name: Package macOS Release
       if: runner.os == 'macOS'
       run: |
         mkdir package
@@ -84,7 +85,7 @@ jobs:
 
     - name: Upload Binaries to GitHub Release
       if: github.event_name == 'release' && github.event.action == 'published'
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         files: |
           *.zip
